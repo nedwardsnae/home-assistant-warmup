@@ -31,6 +31,11 @@ REQUEST_TIMEOUT = aiohttp.ClientTimeout(total=30)
 
 ERROR_UNAUTHORIZED = 110
 
+# Minutes since the thermostat last reached the cloud, capped at 1440.
+STALE_POLL_MINUTES = 30
+# A probe that is not fitted reports 0 or, on the 6iE, 900.
+NO_PROBE = (0, 900)
+
 RUN_MODE_OFF = "off"
 RUN_MODE_SCHEDULE = "schedule"
 RUN_MODE_OVERRIDE = "override"
@@ -55,7 +60,7 @@ _STATE_QUERY = """{
         comfortTemp sleepTemp awayTemp
         energy cost schedule isUnavailable lastPoll
         thermostat4ies {
-          deviceSN appFw airTemp floor1Temp floor2Temp minTemp maxTemp
+          deviceSN appFw lastPoll airTemp floor1Temp floor2Temp minTemp maxTemp
           isFaultAir isFaultFloor1 isFaultFloor2 heatingTarget
           parameters { outputStatus systemPower }
         }
@@ -89,6 +94,13 @@ def _temp(value: Any) -> float | None:
         return int(value) / 10
     except (TypeError, ValueError):
         return None
+
+
+def _probe(value: Any) -> float | None:
+    temperature = _temp(value)
+    if temperature is None or round(temperature * 10) in NO_PROBE:
+        return None
+    return temperature
 
 
 def _to_tenths(temperature: float) -> int:
@@ -188,7 +200,8 @@ def _parse_room(location: dict[str, Any], room: dict[str, Any]) -> Room:
     holiday = location.get("holiday") or {}
     run_mode = room.get("runMode")
 
-    floor = _temp(thermostat.get("floor1Temp"))
+    floor = _probe(thermostat.get("floor1Temp"))
+    thermostat_poll = thermostat.get("lastPoll")
     target = _temp(room.get("targetTemp"))
     current = _temp(room.get("currentTemp"))
     # The 7iE never raises outputStatus, so fall back to comparing the
@@ -210,8 +223,7 @@ def _parse_room(location: dict[str, Any], room: dict[str, Any]) -> Room:
         target_temperature=None if run_mode == RUN_MODE_OFF else target,
         current_temperature=current,
         main_probe=room.get("mainLabel"),
-        # A probe that is not fitted reports 0.
-        floor_temperature=floor if floor else None,
+        floor_temperature=floor,
         air_temperature=_temp(thermostat.get("airTemp")),
         fixed_temperature=_temp(room.get("fixedTemp")),
         override_temperature=_temp(room.get("overrideTemp")),
@@ -227,7 +239,8 @@ def _parse_room(location: dict[str, Any], room: dict[str, Any]) -> Room:
         heating=heating,
         rated_power=parameters.get("systemPower") or None,
         firmware=thermostat.get("appFw") or None,
-        unavailable=bool(room.get("isUnavailable")),
+        unavailable=bool(room.get("isUnavailable"))
+        or (isinstance(thermostat_poll, int) and thermostat_poll >= STALE_POLL_MINUTES),
         fault_air=bool(thermostat.get("isFaultAir")),
         fault_floor=bool(
             thermostat.get("isFaultFloor1") or thermostat.get("isFaultFloor2")

@@ -224,6 +224,15 @@ async def test_auth_failure_starts_reauth(hass, setup, aioclient_mock):
     assert any(setup.async_get_active_flows(hass, {"reauth"}))
 
 
+async def test_stale_thermostat_unavailable(hass, setup, aioclient_mock, state):
+    room_of(state)["thermostat4ies"][0]["lastPoll"] = 1440
+    await _poll(hass, aioclient_mock, state)
+    assert hass.states.get(CLIMATE).state == "unavailable"
+    room_of(state)["thermostat4ies"][0]["lastPoll"] = 0
+    await _poll(hass, aioclient_mock, state)
+    assert hass.states.get(CLIMATE).state != "unavailable"
+
+
 async def test_unload(hass, setup):
     assert await hass.config_entries.async_unload(setup.entry_id)
     assert setup.state is ConfigEntryState.NOT_LOADED

@@ -72,6 +72,35 @@ async def test_off_has_no_target(hass, aioclient_mock, state):
     assert room.target_temperature is None
 
 
+@pytest.mark.parametrize(
+    ("room_poll", "thermostat_poll", "flagged", "unavailable"),
+    [
+        (34, 0, False, False),
+        (34, 29, False, False),
+        (0, 30, False, True),
+        (34, 1440, False, True),
+        (34, None, False, False),
+        (34, 0, True, True),
+    ],
+)
+async def test_unavailable(
+    hass, aioclient_mock, state, room_poll, thermostat_poll, flagged, unavailable
+):
+    room_of(state).update(lastPoll=room_poll, isUnavailable=flagged)
+    room_of(state)["thermostat4ies"][0]["lastPoll"] = thermostat_poll
+    aioclient_mock.post(GRAPHQL_URL, json=state)
+    room = (await _client(hass).get_rooms())[2002]
+    assert room.unavailable is unavailable
+
+
+@pytest.mark.parametrize("reading", ["0", "900", ""])
+async def test_floor_probe_not_fitted(hass, aioclient_mock, state, reading):
+    room_of(state)["thermostat4ies"][0]["floor1Temp"] = reading
+    aioclient_mock.post(GRAPHQL_URL, json=state)
+    room = (await _client(hass).get_rooms())[2002]
+    assert room.floor_temperature is None
+
+
 async def test_unauthorized(hass, aioclient_mock):
     aioclient_mock.post(
         GRAPHQL_URL,

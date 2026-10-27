@@ -42,6 +42,7 @@
                 {
                   "deviceSN": "AABBCCDDEEFF",
                   "appFw": "11.052",
+                  "lastPoll": 0,
                   "airTemp": "210",
                   "floor1Temp": "205",
                   "floor2Temp": "0",
