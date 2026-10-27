@@ -27,7 +27,6 @@ class WarmupEntity(CoordinatorEntity[WarmupCoordinator]):
             name=room.name,
             serial_number=room.serial,
             sw_version=room.firmware,
-            suggested_area=room.name,
         )
 
     @property

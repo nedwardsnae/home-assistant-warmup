@@ -11,6 +11,7 @@ from pytest_homeassistant_custom_component.common import async_fire_time_changed
 from custom_components.warmup.const import DOMAIN, SCAN_INTERVAL
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_component import async_update_entity
 from homeassistant.util import dt as dt_util
 
@@ -231,6 +232,12 @@ async def test_stale_thermostat_unavailable(hass, setup, aioclient_mock, state):
     room_of(state)["thermostat4ies"][0]["lastPoll"] = 0
     await _poll(hass, aioclient_mock, state)
     assert hass.states.get(CLIMATE).state != "unavailable"
+
+
+async def test_device_has_no_suggested_area(hass, setup):
+    devices = dr.async_entries_for_config_entry(dr.async_get(hass), setup.entry_id)
+    assert [device.area_id for device in devices] == [None]
+    assert hass.states.get(CLIMATE) is not None
 
 
 async def test_unload(hass, setup):
