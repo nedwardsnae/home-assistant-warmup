@@ -10,7 +10,18 @@ from homeassistant.core import HomeAssistant
 
 from .coordinator import WarmupConfigEntry
 
-TO_REDACT = {"serial", "location_name", "email", "token"}
+TO_REDACT = {
+    "email",
+    "token",
+    "id",
+    "location_id",
+    "location_name",
+    "name",
+    "serial",
+    "schedule",
+    "holiday_start",
+    "holiday_end",
+}
 
 
 async def async_get_config_entry_diagnostics(
