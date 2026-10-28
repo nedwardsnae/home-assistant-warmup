@@ -1,12 +1,12 @@
 {
   "domain": "warmup",
   "name": "Warmup",
-  "codeowners": ["@michaelpm91"],
+  "codeowners": ["@nedwardsnae"],
   "config_flow": true,
-  "documentation": "https://github.com/michaelpm91/home-assistant-warmup",
+  "documentation": "https://github.com/nedwardsnae/home-assistant-warmup",
   "integration_type": "hub",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/michaelpm91/home-assistant-warmup/issues",
+  "issue_tracker": "https://github.com/nedwardsnae/home-assistant-warmup/issues",
   "requirements": [],
   "version": "0.2.1"
 }

@@ -1,5 +1,16 @@
 # Warmup for Home Assistant
 
+> This is a fork of
+> [michaelpm91/home-assistant-warmup](https://github.com/michaelpm91/home-assistant-warmup)
+> with fixes for the 6iE:
+>
+> - A thermostat that stops reaching the Warmup cloud shows as unavailable.
+> - A floor probe that is not fitted is no longer reported as a temperature.
+> - Diagnostics leave out room names, IDs and schedules.
+> - Entity IDs no longer repeat the room name on Home Assistant 2026.10.
+>
+> Install it in HACS as a custom repository of type **Integration**.
+
 A Home Assistant integration for Warmup underfloor heating thermostats, using
 the same cloud API as the MyHeating app. It is a rewrite of
 [ha-warmup/warmup](https://github.com/ha-warmup/warmup) with UI setup, energy
