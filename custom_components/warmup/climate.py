@@ -94,12 +94,21 @@ def _format_time(value: time) -> str:
     return value.strftime("%H:%M")
 
 
+# Home Assistant 2026.11 moved climate temperatures to native_* properties (the old
+# names stop working in 2027.11). Use them when available, else fall back so older
+# Home Assistant versions keep working.
+_HAS_NATIVE_TEMPERATURES = hasattr(ClimateEntity, "native_current_temperature")
+
+
 class WarmupClimate(WarmupEntity, ClimateEntity):
     """A Warmup thermostat."""
 
     _attr_name = None
     _attr_translation_key = "thermostat"
-    _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    if _HAS_NATIVE_TEMPERATURES:
+        _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
+    else:
+        _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_target_temperature_step = PRECISION_HALVES
     _attr_hvac_modes = [HVACMode.OFF, HVACMode.HEAT, HVACMode.AUTO]
     _attr_preset_modes = [PRESET_NONE, PRESET_AWAY]
@@ -114,12 +123,22 @@ class WarmupClimate(WarmupEntity, ClimateEntity):
         super().__init__(coordinator, room_id, "climate")
 
     @property
-    def current_temperature(self) -> float | None:
+    def native_current_temperature(self) -> float | None:
         return self.room.current_temperature
 
     @property
-    def target_temperature(self) -> float | None:
+    def native_target_temperature(self) -> float | None:
         return self.room.target_temperature
+
+    if not _HAS_NATIVE_TEMPERATURES:
+
+        @property
+        def current_temperature(self) -> float | None:
+            return self.room.current_temperature
+
+        @property
+        def target_temperature(self) -> float | None:
+            return self.room.target_temperature
 
     @property
     def min_temp(self) -> float:
